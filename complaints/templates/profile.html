@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex align-items-center mb-5 pb-3 border-bottom">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm me-4" style="width: 80px; height: 80px; font-size: 2.5rem;">
+            {{ user.username.0|upper }}
+        </div>
+        <div>
+            <h2 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h2>
+            <p class="text-muted mb-0"><i class="fa-regular fa-envelope me-1"></i> {{ user.email }}</p>
+            <p class="text-muted small mb-0">Member since {{ user.date_joined|date:"F Y" }}</p>
+        </div>
+    </div>
+
+    <h3 class="fw-bold mb-4"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> My Reported Issues</h3>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for complaint in complaints %}
+        <div class="col">
+            <div class="card h-100 complaint-card border-0 shadow-sm rounded-4">
+                {% if complaint.status == 'Pending' %}
+                    <div class="card-header bg-danger text-white border-0 text-center fw-bold py-2"><i class="fa-solid fa-clock me-1"></i> Pending</div>
+                {% elif complaint.status == 'In Progress' %}
+                    <div class="card-header bg-warning text-dark border-0 text-center fw-bold py-2"><i class="fa-solid fa-spinner me-1"></i> In Progress</div>
+                {% else %}
+                    <div class="card-header bg-success text-white border-0 text-center fw-bold py-2"><i class="fa-solid fa-check-circle me-1"></i> Resolved</div>
+                {% endif %}
+
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-truncate">{{ complaint.title }}</h5>
+                    <p class="card-text text-muted small mb-2"><i class="fa-solid fa-location-dot me-1"></i> {{ complaint.get_municipality_display }} - {{ complaint.ward }}</p>
+                    <p class="card-text text-muted small"><i class="fa-regular fa-calendar me-1"></i> Reported on: {{ complaint.created_at|date:"M d, Y" }}</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 pb-3 pt-0 text-center">
+                    <a href="{% url 'complaint_detail' complaint.pk %}" class="btn btn-outline-primary rounded-pill btn-sm w-100">View Status</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 w-100 text-center py-5">
+            <div class="text-muted mb-3">
+                <i class="fa-solid fa-clipboard-check fa-4x opacity-50"></i>
+            </div>
+            <h4>No issues reported yet</h4>
+            <p class="text-muted mb-4">You haven't submitted any civic complaints.</p>
+            <a href="{% url 'submit_complaint' %}" class="btn btn-primary rounded-pill px-4">Report an Issue Now</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

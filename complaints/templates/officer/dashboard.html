@@ -1,0 +1,433 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Officer Dashboard — {{ officer.municipality }} | CivicReporter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #0f0f1a;
+  color: #e2e8f0;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: rgba(255,255,255,0.03);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  display: flex; flex-direction: column;
+  padding: 1.5rem 1rem;
+  position: sticky; top: 0; height: 100vh;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.sidebar-brand-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: #fff;
+}
+.sidebar-brand-name { font-size: 1rem; font-weight: 800; color: #fff; }
+.sidebar-muni-badge {
+  display: inline-block;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 0.2rem 0.6rem; border-radius: 999px;
+  margin-bottom: 1.5rem; margin-top: 0.3rem;
+  {% if officer.municipality == 'AMC' %}
+  background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3);
+  {% else %}
+  background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3);
+  {% endif %}
+}
+.sidebar-section-label {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: rgba(255,255,255,0.25);
+  padding: 0 0.5rem; margin-bottom: 0.5rem;
+}
+.sidebar-nav { list-style: none; margin-bottom: 1.5rem; }
+.sidebar-nav li a {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.6rem 0.75rem; border-radius: 10px;
+  font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5);
+  text-decoration: none; transition: all 0.2s;
+}
+.sidebar-nav li a:hover, .sidebar-nav li a.active {
+  background: rgba(99,102,241,0.15); color: #a5b4fc;
+}
+.sidebar-nav li a.active { border-left: 3px solid #6366f1; }
+.sidebar-footer {
+  margin-top: auto; padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.officer-info {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.5rem; margin-bottom: 0.5rem;
+}
+.officer-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.officer-name { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; }
+.officer-role { font-size: 0.67rem; color: rgba(255,255,255,0.35); }
+.btn-logout {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.55rem 0.75rem; border-radius: 9px;
+  font-size: 0.78rem; font-weight: 600; color: rgba(239,68,68,0.7);
+  text-decoration: none; transition: all 0.2s;
+}
+.btn-logout:hover { background: rgba(239,68,68,0.1); color: #fca5a5; }
+
+/* ── Main ── */
+.main {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.topbar {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
+}
+.topbar-title { font-size: 1.1rem; font-weight: 800; color: #fff; flex: 1; }
+.topbar-subtitle { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 1rem;
+  padding: 1.5rem 2rem 0;
+}
+.stat-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 1rem 1.25rem;
+  transition: all 0.2s;
+}
+.stat-card:hover { background: rgba(255,255,255,0.07); transform: translateY(-2px); }
+.stat-label {
+  font-size: 0.67rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(255,255,255,0.35); margin-bottom: 0.4rem;
+}
+.stat-val { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+.stat-card.s-pending .stat-val   { color: #fbbf24; }
+.stat-card.s-progress .stat-val  { color: #60a5fa; }
+.stat-card.s-resolved .stat-val  { color: #34d399; }
+.stat-card.s-rejected .stat-val  { color: #f87171; }
+
+/* ── Filters ── */
+.filter-bar {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  padding: 1.25rem 2rem 0;
+}
+.filter-tabs { display: flex; gap: 0.4rem; }
+.tab-btn {
+  padding: 0.45rem 1rem; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: transparent; color: rgba(255,255,255,0.45);
+  cursor: pointer; text-decoration: none; transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover, .tab-btn.active {
+  background: rgba(99,102,241,0.2); color: #a5b4fc;
+  border-color: rgba(99,102,241,0.4);
+}
+.tab-btn.t-pending.active  { background:rgba(251,191,36,0.15);  color:#fbbf24; border-color:rgba(251,191,36,0.4); }
+.tab-btn.t-progress.active { background:rgba(96,165,250,0.15);  color:#60a5fa; border-color:rgba(96,165,250,0.4); }
+.tab-btn.t-resolved.active { background:rgba(52,211,153,0.15);  color:#34d399; border-color:rgba(52,211,153,0.4); }
+.tab-btn.t-rejected.active { background:rgba(248,113,113,0.15); color:#f87171; border-color:rgba(248,113,113,0.4); }
+
+.search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+.search-wrap i { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+.search-input {
+  width: 100%; background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 0.5rem 1rem 0.5rem 2.4rem;
+  font-size: 0.83rem; color: #fff; outline: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: border-color 0.2s;
+}
+.search-input::placeholder { color: rgba(255,255,255,0.2); }
+.search-input:focus { border-color: #6366f1; }
+.search-btn {
+  padding: 0.5rem 1.1rem; border-radius: 10px;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  border: none; color: #fff; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.2s; white-space: nowrap;
+}
+.search-btn:hover { opacity: 0.9; }
+
+/* ── Complaint Table ── */
+.table-wrap {
+  flex: 1; overflow-y: auto;
+  padding: 1.25rem 2rem 2rem;
+}
+.complaint-table {
+  width: 100%; border-collapse: separate; border-spacing: 0 0.5rem;
+}
+.complaint-table thead th {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(255,255,255,0.3);
+  padding: 0 1rem 0.5rem; text-align: left;
+}
+.complaint-table tbody tr {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+.complaint-table tbody tr:hover { background: rgba(99,102,241,0.08); cursor: pointer; }
+.complaint-table tbody td {
+  padding: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.complaint-table tbody td:first-child {
+  border-left: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px 0 0 12px;
+}
+.complaint-table tbody td:last-child {
+  border-right: 1px solid rgba(255,255,255,0.05);
+  border-radius: 0 12px 12px 0;
+}
+
+.comp-title { font-size: 0.88rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.2rem; }
+.comp-meta  { font-size: 0.72rem; color: rgba(255,255,255,0.35); }
+.comp-addr  { font-size: 0.73rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem;
+  max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cat-badge {
+  display: inline-block; font-size: 0.67rem; font-weight: 700;
+  padding: 0.25rem 0.65rem; border-radius: 999px;
+  background: rgba(167,139,250,0.15); color: #c4b5fd;
+  border: 1px solid rgba(167,139,250,0.2);
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.75rem; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700;
+}
+.s-Pending    { background:rgba(251,191,36,0.15);  color:#fbbf24; border:1px solid rgba(251,191,36,0.3); }
+.s-In.Progress, .s-In-Progress { background:rgba(96,165,250,0.15);  color:#60a5fa; border:1px solid rgba(96,165,250,0.3); }
+.s-Resolved   { background:rgba(52,211,153,0.15);  color:#34d399; border:1px solid rgba(52,211,153,0.3); }
+.s-Rejected   { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+
+.date-col { font-size: 0.75rem; color: rgba(255,255,255,0.35); white-space: nowrap; }
+.btn-view {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 0.85rem; border-radius: 8px;
+  background: rgba(99,102,241,0.15); color: #a5b4fc;
+  font-size: 0.75rem; font-weight: 700; text-decoration: none;
+  border: 1px solid rgba(99,102,241,0.25);
+  transition: all 0.2s; white-space: nowrap;
+}
+.btn-view:hover { background: rgba(99,102,241,0.3); }
+
+.empty-state {
+  text-align: center; padding: 4rem 2rem;
+  color: rgba(255,255,255,0.3);
+}
+.empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.empty-state p { font-size: 0.9rem; }
+
+/* scrollbar */
+.table-wrap::-webkit-scrollbar { width: 4px; }
+.table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<!-- ══ Sidebar ══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon"><i class="fa-solid fa-city"></i></div>
+    <span class="sidebar-brand-name">CivicReporter</span>
+  </div>
+  <div class="sidebar-muni-badge">
+    <i class="fa-solid fa-building-columns"></i>
+    {{ officer.municipality }} Officer
+  </div>
+
+  <div class="sidebar-section-label">Management</div>
+  <ul class="sidebar-nav">
+    <li><a href="{% url 'officer_dashboard' %}" class="active">
+      <i class="fa-solid fa-inbox"></i> Complaints Inbox
+    </a></li>
+    <li><a href="{% url 'officer_dashboard' %}?status=Pending">
+      <i class="fa-solid fa-clock"></i> Pending
+      <span style="margin-left:auto;background:rgba(251,191,36,0.2);color:#fbbf24;padding:0.1rem 0.5rem;border-radius:999px;font-size:0.65rem;">{{ pending }}</span>
+    </a></li>
+    <li><a href="{% url 'officer_dashboard' %}?status=In+Progress">
+      <i class="fa-solid fa-spinner"></i> In Progress
+    </a></li>
+    <li><a href="{% url 'officer_dashboard' %}?status=Resolved">
+      <i class="fa-solid fa-circle-check"></i> Resolved
+    </a></li>
+    <li><a href="{% url 'officer_dashboard' %}?status=Rejected">
+      <i class="fa-solid fa-circle-xmark"></i> Rejected
+    </a></li>
+  </ul>
+
+  <div class="sidebar-section-label">Account</div>
+  <ul class="sidebar-nav">
+    <li><a href="{% url 'home' %}" target="_blank">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> Citizen Portal
+    </a></li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <div class="officer-info">
+      <div class="officer-avatar">{{ officer.user.username|first|upper }}</div>
+      <div>
+        <div class="officer-name">{{ officer.user.get_full_name|default:officer.user.username }}</div>
+        <div class="officer-role">{{ officer.designation }}</div>
+      </div>
+    </div>
+    <a href="{% url 'officer_logout' %}" class="btn-logout">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+  </div>
+</aside>
+
+<!-- ══ Main Content ══ -->
+<main class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">
+        {% if officer.municipality == 'AMC' %}Ahmedabad{% else %}Gandhinagar{% endif %}
+        Municipal Corporation — Complaint Dashboard
+      </div>
+      <div class="topbar-subtitle">
+        Officer: {{ officer.user.get_full_name|default:officer.user.username }} &nbsp;·&nbsp;
+        ID: {{ officer.employee_id }} &nbsp;·&nbsp;
+        {{ officer.designation }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label"><i class="fa-solid fa-layer-group"></i> Total</div>
+      <div class="stat-val">{{ total }}</div>
+    </div>
+    <div class="stat-card s-pending">
+      <div class="stat-label"><i class="fa-solid fa-clock"></i> Pending</div>
+      <div class="stat-val">{{ pending }}</div>
+    </div>
+    <div class="stat-card s-progress">
+      <div class="stat-label"><i class="fa-solid fa-spinner"></i> In Progress</div>
+      <div class="stat-val">{{ in_progress }}</div>
+    </div>
+    <div class="stat-card s-resolved">
+      <div class="stat-label"><i class="fa-solid fa-circle-check"></i> Resolved</div>
+      <div class="stat-val">{{ resolved }}</div>
+    </div>
+    <div class="stat-card s-rejected">
+      <div class="stat-label"><i class="fa-solid fa-circle-xmark"></i> Rejected</div>
+      <div class="stat-val">{{ rejected }}</div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <a href="{% url 'officer_dashboard' %}" class="tab-btn {% if not status_filter %}active{% endif %}">All</a>
+      <a href="?status=Pending"     class="tab-btn t-pending  {% if status_filter == 'Pending' %}active{% endif %}">Pending</a>
+      <a href="?status=In+Progress" class="tab-btn t-progress {% if status_filter == 'In Progress' %}active{% endif %}">In Progress</a>
+      <a href="?status=Resolved"    class="tab-btn t-resolved {% if status_filter == 'Resolved' %}active{% endif %}">Resolved</a>
+      <a href="?status=Rejected"    class="tab-btn t-rejected {% if status_filter == 'Rejected' %}active{% endif %}">Rejected</a>
+    </div>
+
+    <form method="GET" style="display:flex;gap:0.5rem;flex:1;max-width:460px;">
+      {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+      <div class="search-wrap" style="max-width:100%;flex:1;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" name="q" value="{{ search }}" class="search-input" placeholder="Search title, ward, address…">
+      </div>
+      <button type="submit" class="search-btn"><i class="fa-solid fa-filter"></i> Filter</button>
+    </form>
+  </div>
+
+  <!-- Complaints table -->
+  <div class="table-wrap">
+    {% if complaints %}
+    <table class="complaint-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Complaint</th>
+          <th>Category</th>
+          <th>Ward / Address</th>
+          <th>Citizen</th>
+          <th>Status</th>
+          <th>Filed</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr onclick="window.location='{% url 'officer_complaint_detail' c.pk %}'">
+          <td style="font-size:0.75rem;color:rgba(255,255,255,0.3);width:40px;">#{{ c.pk }}</td>
+          <td>
+            <div class="comp-title">{{ c.title }}</div>
+            <div class="comp-meta">{{ c.description|truncatechars:60 }}</div>
+          </td>
+          <td><span class="cat-badge">{{ c.get_category_display }}</span></td>
+          <td>
+            <div style="font-size:0.78rem;font-weight:600;color:#e2e8f0;">{{ c.ward }}</div>
+            {% if c.address %}<div class="comp-addr"><i class="fa-solid fa-location-dot" style="color:#6366f1;font-size:0.65rem;"></i> {{ c.address }}</div>{% endif %}
+          </td>
+          <td>
+            <div style="font-size:0.78rem;font-weight:600;color:#e2e8f0;">{{ c.user.get_full_name|default:c.user.username }}</div>
+            {% if c.phone %}<div class="comp-meta"><i class="fa-solid fa-phone" style="font-size:0.6rem;"></i> {{ c.phone }}</div>{% endif %}
+          </td>
+          <td>
+            <span class="status-badge s-{{ c.status|slugify }}">
+              {% if c.status == 'Pending' %}<i class="fa-solid fa-clock"></i>
+              {% elif c.status == 'In Progress' %}<i class="fa-solid fa-spinner fa-spin"></i>
+              {% elif c.status == 'Resolved' %}<i class="fa-solid fa-check"></i>
+              {% else %}<i class="fa-solid fa-xmark"></i>{% endif %}
+              {{ c.status }}
+            </span>
+          </td>
+          <td class="date-col">
+            {{ c.created_at|date:"d M Y" }}<br>
+            <span style="font-size:0.66rem;">{{ c.created_at|date:"H:i" }}</span>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <a href="{% url 'officer_complaint_detail' c.pk %}" class="btn-view">
+              <i class="fa-solid fa-arrow-right"></i> Manage
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-inbox"></i>
+      <p>No complaints found{% if status_filter %} with status "{{ status_filter }}"{% endif %}{% if search %} matching "{{ search }}"{% endif %}.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</main>
+</body>
+</html>

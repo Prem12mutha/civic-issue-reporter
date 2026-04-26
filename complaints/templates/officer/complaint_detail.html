@@ -1,0 +1,399 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Complaint #{{ complaint.pk }} — {{ officer.municipality }} | CivicReporter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #0f0f1a; color: #e2e8f0; min-height: 100vh;
+}
+.topbar {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 2rem;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  position: sticky; top: 0; z-index: 100;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem; border-radius: 9px;
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
+  font-size: 0.78rem; font-weight: 700; text-decoration: none;
+  transition: all 0.2s; border: 1px solid rgba(255,255,255,0.08);
+}
+.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.topbar-title { font-size: 1rem; font-weight: 800; color: #fff; }
+.topbar-sub   { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+
+/* Status badges */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.35rem 0.9rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 700;
+}
+.s-Pending     { background:rgba(251,191,36,0.15);  color:#fbbf24; border:1px solid rgba(251,191,36,0.3); }
+.s-In-Progress { background:rgba(96,165,250,0.15);  color:#60a5fa; border:1px solid rgba(96,165,250,0.3); }
+.s-Resolved    { background:rgba(52,211,153,0.15);  color:#34d399; border:1px solid rgba(52,211,153,0.3); }
+.s-Rejected    { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+
+.page-body {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ── Complaint Card ── */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px; padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.card-title {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: rgba(255,255,255,0.3);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;
+}
+.complaint-headline {
+  font-size: 1.5rem; font-weight: 900; color: #fff;
+  margin-bottom: 0.75rem; line-height: 1.25;
+}
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;
+}
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(255,255,255,0.06); border-radius: 999px;
+  padding: 0.3rem 0.75rem; font-size: 0.72rem; font-weight: 600;
+  color: rgba(255,255,255,0.55);
+}
+.meta-pill i { color: #7c3aed; }
+.description-box {
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px; padding: 1rem;
+  font-size: 0.85rem; line-height: 1.7;
+  color: rgba(255,255,255,0.65);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.complaint-img {
+  width: 100%; border-radius: 14px; margin-top: 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  max-height: 360px; object-fit: cover;
+}
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.field-item label {
+  display: block; font-size: 0.67rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(255,255,255,0.3); margin-bottom: 0.3rem;
+}
+.field-item p {
+  font-size: 0.85rem; font-weight: 600; color: #e2e8f0;
+}
+
+/* ── Right column ── */
+.right-col {}
+
+/* Update form */
+.update-form .officer-select,
+.update-form .officer-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: 0.75rem 1rem;
+  font-size: 0.85rem; color: #fff; outline: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: border-color 0.2s;
+  margin-bottom: 0.85rem;
+}
+.update-form .officer-select:focus,
+.update-form .officer-textarea:focus {
+  border-color: #6366f1;
+  background: rgba(99,102,241,0.08);
+}
+.update-form .officer-select option { background: #1e1b4b; }
+.update-form label {
+  display: block; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.4); margin-bottom: 0.4rem;
+}
+.file-label {
+  display: block; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.4); margin-bottom: 0.4rem;
+}
+.officer-file {
+  width: 100%; font-size: 0.78rem; color: rgba(255,255,255,0.5);
+  margin-bottom: 1rem;
+}
+.btn-update {
+  width: 100%; padding: 0.9rem;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  border: none; border-radius: 14px;
+  color: #fff; font-size: 0.9rem; font-weight: 800;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 0.5rem;
+  box-shadow: 0 8px 28px rgba(79,70,229,0.4);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.btn-update:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(79,70,229,0.55); }
+
+/* Messages */
+.alert {
+  padding: 0.7rem 1rem; border-radius: 10px; margin-bottom: 1rem;
+  font-size: 0.82rem; font-weight: 600;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.alert-success { background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.25); }
+
+/* ── Activity Log ── */
+.activity-log { display: flex; flex-direction: column; gap: 0.75rem; }
+.log-item {
+  display: flex; gap: 0.85rem; align-items: flex-start;
+}
+.log-dot {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+}
+.log-dot.created  { background:rgba(99,102,241,0.2); color:#a5b4fc; }
+.log-dot.updated  { background:rgba(251,191,36,0.2); color:#fbbf24; }
+.log-dot.resolved { background:rgba(52,211,153,0.2); color:#34d399; }
+.log-dot.rejected { background:rgba(248,113,113,0.2); color:#f87171; }
+.log-body {}
+.log-title { font-size: 0.8rem; font-weight: 700; color: #e2e8f0; }
+.log-meta  { font-size: 0.7rem; color: rgba(255,255,255,0.35); margin-top: 0.1rem; }
+.log-note  {
+  margin-top: 0.35rem; font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px; padding: 0.5rem 0.7rem;
+  border-left: 3px solid rgba(99,102,241,0.4);
+}
+.log-res-img { margin-top: 0.5rem; border-radius: 8px; max-width: 100%; border: 1px solid rgba(255,255,255,0.08); }
+
+/* citizen contact */
+.contact-row { display: flex; gap: 0.75rem; }
+.contact-pill {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 999px; padding: 0.35rem 0.85rem;
+  font-size: 0.75rem; font-weight: 600; color: #a5b4fc;
+  text-decoration: none; transition: all 0.2s;
+}
+.contact-pill:hover { background: rgba(99,102,241,0.2); }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <a href="{% url 'officer_dashboard' %}" class="back-btn">
+    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+  </a>
+  <div style="flex:1;">
+    <div class="topbar-title">Complaint #{{ complaint.pk }} — {{ complaint.title|truncatechars:50 }}</div>
+    <div class="topbar-sub">{{ officer.municipality }} · {{ officer.user.get_full_name|default:officer.user.username }}</div>
+  </div>
+  <span class="status-badge s-{{ complaint.status|slugify }}">
+    {% if complaint.status == 'Pending' %}<i class="fa-solid fa-clock"></i>
+    {% elif complaint.status == 'In Progress' %}<i class="fa-solid fa-spinner fa-spin"></i>
+    {% elif complaint.status == 'Resolved' %}<i class="fa-solid fa-check"></i>
+    {% else %}<i class="fa-solid fa-xmark"></i>{% endif %}
+    {{ complaint.status }}
+  </span>
+</div>
+
+<div class="page-body">
+
+  <!-- ── Left: Complaint Details ── -->
+  <div class="left-col">
+
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Main info -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-file-lines"></i> Complaint Details</div>
+      <div class="complaint-headline">{{ complaint.title }}</div>
+
+      <div class="meta-row">
+        <span class="meta-pill"><i class="fa-solid fa-tag"></i> {{ complaint.get_category_display }}</span>
+        <span class="meta-pill"><i class="fa-solid fa-building-columns"></i> {{ complaint.municipality }}</span>
+        <span class="meta-pill"><i class="fa-solid fa-calendar"></i> {{ complaint.created_at|date:"d M Y, H:i" }}</span>
+      </div>
+
+      <div class="description-box">{{ complaint.description }}</div>
+
+      {% if complaint.image %}
+      <img src="{{ complaint.image.url }}" alt="Complaint photo" class="complaint-img">
+      {% endif %}
+    </div>
+
+    <!-- Location -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-map-location-dot"></i> Location</div>
+      <div class="field-grid">
+        <div class="field-item">
+          <label>Ward</label><p>{{ complaint.ward }}</p>
+        </div>
+        <div class="field-item">
+          <label>Municipality</label><p>{{ complaint.get_municipality_display }}</p>
+        </div>
+        {% if complaint.address %}
+        <div class="field-item" style="grid-column:span 2;">
+          <label>Address (map pin)</label>
+          <p style="color:#a5b4fc;">
+            <i class="fa-solid fa-location-dot"></i> {{ complaint.address }}
+          </p>
+        </div>
+        {% endif %}
+        {% if complaint.latitude and complaint.longitude %}
+        <div class="field-item">
+          <label>Coordinates</label>
+          <p style="font-size:0.78rem;color:rgba(255,255,255,0.5);">
+            {{ complaint.latitude }}, {{ complaint.longitude }}
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Citizen info -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-user"></i> Citizen Info</div>
+      <div class="field-grid" style="margin-bottom:1rem;">
+        <div class="field-item">
+          <label>Name</label>
+          <p>{{ complaint.user.get_full_name|default:complaint.user.username }}</p>
+        </div>
+        <div class="field-item">
+          <label>Username</label><p>@{{ complaint.user.username }}</p>
+        </div>
+      </div>
+      <div class="contact-row">
+        {% if complaint.phone %}
+        <a href="tel:{{ complaint.phone }}" class="contact-pill">
+          <i class="fa-solid fa-phone"></i> {{ complaint.phone }}
+        </a>
+        {% endif %}
+        {% if complaint.email %}
+        <a href="mailto:{{ complaint.email }}" class="contact-pill">
+          <i class="fa-solid fa-envelope"></i> {{ complaint.email }}
+        </a>
+        {% endif %}
+        {% if not complaint.phone and not complaint.email %}
+        <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;">No contact info provided</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Activity log -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-timeline"></i> Activity Log</div>
+      <div class="activity-log">
+        <!-- Submission entry -->
+        <div class="log-item">
+          <div class="log-dot created"><i class="fa-solid fa-plus"></i></div>
+          <div class="log-body">
+            <div class="log-title">Complaint submitted by citizen</div>
+            <div class="log-meta">{{ complaint.created_at|date:"d M Y, H:i" }} · @{{ complaint.user.username }}</div>
+          </div>
+        </div>
+        <!-- Officer updates -->
+        {% for upd in updates %}
+        <div class="log-item">
+          <div class="log-dot {% if upd.new_status == 'Resolved' %}resolved{% elif upd.new_status == 'Rejected' %}rejected{% else %}updated{% endif %}">
+            {% if upd.new_status == 'Resolved' %}<i class="fa-solid fa-check"></i>
+            {% elif upd.new_status == 'Rejected' %}<i class="fa-solid fa-xmark"></i>
+            {% else %}<i class="fa-solid fa-pen"></i>{% endif %}
+          </div>
+          <div class="log-body">
+            <div class="log-title">
+              Status changed: <span style="color:rgba(255,255,255,0.5);">{{ upd.old_status }}</span>
+              → <strong style="color:#a5b4fc;">{{ upd.new_status }}</strong>
+            </div>
+            <div class="log-meta">
+              {{ upd.created_at|date:"d M Y, H:i" }}
+              {% if upd.officer %} · {{ upd.officer.get_full_name|default:upd.officer.username }}{% endif %}
+            </div>
+            {% if upd.note %}
+            <div class="log-note">{{ upd.note }}</div>
+            {% endif %}
+            {% if upd.resolution_image %}
+            <img src="{{ upd.resolution_image.url }}" class="log-res-img" alt="Resolution photo">
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:rgba(255,255,255,0.3);font-size:0.82rem;">No officer updates yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Right: Update Panel ── -->
+  <div class="right-col">
+    <div class="card" style="position:sticky;top:80px;">
+      <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Update Complaint Status</div>
+
+      <form method="POST" enctype="multipart/form-data" class="update-form">
+        {% csrf_token %}
+        <label>Change Status To</label>
+        <select name="new_status" class="officer-select">
+          <option value="Pending"     {% if complaint.status == 'Pending' %}selected{% endif %}>⏳ Pending</option>
+          <option value="In Progress" {% if complaint.status == 'In Progress' %}selected{% endif %}>🔵 In Progress</option>
+          <option value="Resolved"    {% if complaint.status == 'Resolved' %}selected{% endif %}>✅ Resolved</option>
+          <option value="Rejected"    {% if complaint.status == 'Rejected' %}selected{% endif %}>❌ Rejected</option>
+        </select>
+
+        <label>Officer Note <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,0.2);">(shown to citizen)</span></label>
+        <textarea name="note" class="officer-textarea" rows="3" placeholder="Add a note for the citizen (optional)…"></textarea>
+
+        <div class="file-label">Attach Resolution Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,0.2);">(optional)</span></div>
+        <input type="file" name="resolution_image" class="officer-file" accept="image/*">
+
+        <button type="submit" class="btn-update">
+          <i class="fa-solid fa-floppy-disk"></i> Save Update
+        </button>
+      </form>
+
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.25);margin-bottom:0.5rem;">Quick Actions</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <form method="POST" enctype="multipart/form-data" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="new_status" value="In Progress">
+            <button type="submit" style="padding:0.4rem 0.85rem;border-radius:8px;background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.25);font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+              <i class="fa-solid fa-spinner"></i> Mark In Progress
+            </button>
+          </form>
+          <form method="POST" enctype="multipart/form-data" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="new_status" value="Resolved">
+            <button type="submit" style="padding:0.4rem 0.85rem;border-radius:8px;background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.25);font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+              <i class="fa-solid fa-check"></i> Mark Resolved
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

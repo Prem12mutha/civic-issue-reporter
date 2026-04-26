@@ -1,0 +1,913 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report a Civic Issue — Civic Reporter{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS (free, open source) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+/* ===== PAGE-SCOPED STYLES ===== */
+.page-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0d0821 0%, #1e0b4a 40%, #2d1b69 100%);
+  padding: 3rem 0 5rem;
+}
+
+/* Progress stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2.5rem;
+}
+.step-dot {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  position: relative; z-index: 1;
+}
+.step-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 800;
+  border: 2px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.07);
+  transition: all 0.35s ease;
+}
+.step-label {
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.35);
+  transition: all 0.35s ease;
+  white-space: nowrap;
+}
+.step-dot.active .step-circle {
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(79,70,229,0.6);
+}
+.step-dot.active .step-label { color: #a5b4fc; }
+.step-dot.done .step-circle  {
+  background: linear-gradient(135deg,#10b981,#059669);
+  border-color: transparent; color: #fff;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.5);
+}
+.step-dot.done .step-label { color: #6ee7b7; }
+
+.step-line {
+  flex: 1; max-width: 80px; height: 2px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 0.5rem;
+  margin-bottom: 1.75rem;
+  transition: background 0.4s;
+}
+.step-line.done { background: linear-gradient(90deg,#10b981,#4f46e5); }
+
+/* Card shell */
+.form-shell {
+  background: rgba(255,255,255,0.97);
+  border-radius: 28px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+.form-shell-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  padding: 2rem 2.25rem 1.75rem;
+  color: #fff;
+}
+.form-shell-header h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.6rem; font-weight: 900; letter-spacing: -0.5px;
+  margin: 0; line-height: 1.2;
+}
+.form-shell-header p {
+  margin: 0.35rem 0 0; font-size: 0.875rem;
+  color: rgba(255,255,255,0.7);
+}
+.form-shell-body { padding: 2rem 2.25rem; }
+
+/* Section dividers inside form */
+.fsection-title {
+  font-size: 0.75rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: #7c3aed; margin-bottom: 1.1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.fsection-title::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(to right, rgba(79,70,229,0.2), transparent);
+}
+
+/* Field labels */
+.f-label {
+  font-size: 0.82rem; font-weight: 700;
+  color: #374151; margin-bottom: 0.4rem;
+  display: block;
+}
+.f-required { color: #ef4444; margin-left: 2px; }
+.f-hint { font-size: 0.72rem; color: #9ca3af; margin-top: 0.25rem; }
+
+/* Inputs */
+.f-input, .f-select, .f-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.9rem; font-weight: 500;
+  color: #111827;
+  background: #f9fafb;
+  transition: all 0.25s ease;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+.f-input:focus, .f-select:focus, .f-textarea:focus {
+  border-color: #4f46e5;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
+}
+.f-textarea { resize: vertical; min-height: 110px; }
+
+/* Category grid */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.6rem;
+}
+.cat-option { display: none; }
+.cat-label {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.4rem; padding: 0.85rem 0.5rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  color: #6b7280; background: #f9fafb;
+  text-align: center; line-height: 1.3;
+  transition: all 0.22s ease;
+  user-select: none;
+}
+.cat-label:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+.cat-option:checked + .cat-label {
+  border-color: #4f46e5; background: #ede9fe;
+  color: #4f46e5;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.2);
+}
+.cat-icon { font-size: 1.4rem; }
+
+/* Image upload dropzone */
+.dropzone {
+  border: 2px dashed #c7d2fe;
+  border-radius: 16px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  background: #f5f3ff;
+  transition: all 0.25s ease;
+  position: relative;
+}
+.dropzone:hover, .dropzone.drag-over {
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+.dropzone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.dropzone-icon { font-size: 2rem; color: #a5b4fc; margin-bottom: 0.5rem; }
+.dropzone-text { font-size: 0.85rem; font-weight: 600; color: #6366f1; }
+.dropzone-hint { font-size: 0.72rem; color: #9ca3af; margin-top: 0.25rem; }
+#preview-img {
+  max-height: 160px; border-radius: 10px;
+  margin-top: 1rem; display: none;
+  border: 2px solid #c7d2fe;
+}
+
+/* ====== RAPIDO-STYLE MAP ====== */
+.map-wrapper {
+  position: relative;
+  height: 400px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid rgba(79,70,229,0.15);
+  box-shadow: 0 8px 32px rgba(79,70,229,0.12);
+}
+
+/* Actual Leaflet map fills the wrapper */
+#map {
+  width: 100%; height: 100%;
+  border-radius: 0;
+  z-index: 0;
+}
+
+/* ---- Floating search bar (top) ---- */
+.map-search-bar {
+  position: absolute;
+  top: 14px; left: 14px; right: 14px;
+  z-index: 800;
+  display: flex; gap: 0.5rem;
+}
+.map-search-input {
+  flex: 1;
+  border: none; outline: none;
+  border-radius: 14px;
+  padding: 0.7rem 1rem 0.7rem 2.8rem;
+  font-size: 0.88rem; font-weight: 500;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  color: #111827;
+  font-family: 'Inter', sans-serif;
+}
+.map-search-icon {
+  position: absolute;
+  left: 1rem; top: 50%; transform: translateY(-50%);
+  color: #6366f1; font-size: 0.9rem;
+  z-index: 801; pointer-events: none;
+}
+.map-search-results {
+  position: absolute;
+  top: calc(100% + 4px); left: 0; right: 56px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  overflow: hidden;
+  display: none;
+  z-index: 802;
+}
+.map-search-result-item {
+  padding: 0.65rem 1rem;
+  font-size: 0.82rem; color: #374151; font-weight: 500;
+  cursor: pointer; border-bottom: 1px solid #f3f4f6;
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+.map-search-result-item:last-child { border-bottom: none; }
+.map-search-result-item:hover { background: #f5f3ff; color: #4f46e5; }
+.map-search-result-item i { color: #a5b4fc; margin-top: 2px; flex-shrink: 0; }
+
+/* GPS button */
+.map-gps-btn {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: #fff;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+  color: #4f46e5; font-size: 1rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.map-gps-btn:hover { background: #4f46e5; color: #fff; transform: scale(1.05); }
+.map-gps-btn.locating { animation: spin 0.8s linear infinite; color: #f59e0b; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ---- Fixed center pin (stays in center, map moves below) ---- */
+.map-pin-center {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 700;
+  pointer-events: none;
+  display: flex; flex-direction: column; align-items: center;
+  transition: transform 0.15s ease;
+}
+.map-pin-center.dragging {
+  transform: translate(-50%, -120%) scale(1.15);
+}
+/* The pin SVG teardrop */
+.pin-teardrop {
+  width: 38px; height: 50px;
+  filter: drop-shadow(0 6px 12px rgba(79,70,229,0.5));
+}
+/* Pulse shadow on ground */
+.pin-shadow {
+  width: 16px; height: 8px;
+  background: radial-gradient(ellipse, rgba(79,70,229,0.45) 0%, transparent 70%);
+  border-radius: 50%;
+  margin-top: -4px;
+  animation: shadowPulse 1.4s ease-in-out infinite;
+}
+.map-pin-center.dragging .pin-shadow {
+  width: 8px; height: 4px;
+  animation: none;
+  opacity: 0.3;
+}
+@keyframes shadowPulse {
+  0%,100% { transform: scale(1); opacity: 0.5; }
+  50%      { transform: scale(1.4); opacity: 0.25; }
+}
+
+/* ---- Address card (bottom) ---- */
+.map-address-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 800;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(79,70,229,0.1);
+  padding: 0.9rem 1rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.addr-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.85rem; flex-shrink: 0;
+}
+.addr-text { flex: 1; min-width: 0; }
+.addr-label {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: #9ca3af;
+}
+.addr-value {
+  font-size: 0.82rem; font-weight: 600; color: #111827;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.addr-coords {
+  font-size: 0.7rem; color: #6366f1; font-weight: 500;
+}
+.btn-confirm-loc {
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(79,70,229,0.35);
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.btn-confirm-loc:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.5); }
+.btn-confirm-loc:disabled { background: #e5e7eb; color: #9ca3af; box-shadow: none; cursor: not-allowed; transform: none; }
+
+/* confirmed tick */
+.loc-confirmed-badge {
+  display: none;
+  align-items: center; gap: 0.35rem;
+  background: #d1fae5; color: #065f46;
+  border-radius: 999px; padding: 0.35rem 0.85rem;
+  font-size: 0.78rem; font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+.loc-confirmed-badge.show { display: inline-flex; }
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #fff; border: none; border-radius: 14px;
+  padding: 1rem 2rem;
+  font-size: 1rem; font-weight: 800;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 8px 28px rgba(79,70,229,0.4);
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+}
+.btn-submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(79,70,229,0.55);
+}
+.btn-cancel {
+  display: block; text-align: center;
+  margin-top: 0.85rem;
+  font-size: 0.85rem; font-weight: 600;
+  color: #6b7280; text-decoration: none;
+  transition: color 0.2s;
+}
+.btn-cancel:hover { color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-bg">
+  <div class="container" style="max-width:740px;">
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-dot active" id="st1">
+        <div class="step-circle"><i class="fa-solid fa-pen-to-square"></i></div>
+        <span class="step-label">Details</span>
+      </div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="st2">
+        <div class="step-circle"><i class="fa-solid fa-location-dot"></i></div>
+        <span class="step-label">Location</span>
+      </div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="st3">
+        <div class="step-circle"><i class="fa-solid fa-user"></i></div>
+        <span class="step-label">Contact</span>
+      </div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-dot" id="st4">
+        <div class="step-circle"><i class="fa-solid fa-paper-plane"></i></div>
+        <span class="step-label">Submit</span>
+      </div>
+    </div>
+
+    <!-- Form Shell -->
+    <div class="form-shell">
+      <div class="form-shell-header">
+        <h1><i class="fa-solid fa-triangle-exclamation me-2"></i>Report a Civic Issue</h1>
+        <p>Help make your city better — your complaint goes directly to the municipality.</p>
+      </div>
+
+      <div class="form-shell-body">
+        <form method="POST" enctype="multipart/form-data" id="complaintForm">
+          {% csrf_token %}
+
+          <!-- Map geolocation results -->
+          {{ form.latitude }}
+          {{ form.longitude }}
+          {{ form.address }}
+
+          <!-- =================== STEP 1: Issue Details =================== -->
+          <div class="form-step" id="step1">
+
+            <div class="fsection-title"><i class="fa-solid fa-pen-to-square"></i> Issue Details</div>
+
+            <!-- Title -->
+            <div class="mb-3">
+              <label class="f-label" for="id_title">Issue Title <span class="f-required">*</span></label>
+              <input type="text" name="title" id="id_title" class="f-input"
+                     placeholder="e.g. Large pothole on Station Road" required
+                     value="{{ form.title.value|default:'' }}">
+            </div>
+
+            <!-- Category grid -->
+            <div class="mb-3">
+              <label class="f-label">Category <span class="f-required">*</span></label>
+              <div class="category-grid">
+                {% for val, label in form.fields.category.choices %}
+                <div>
+                  <input type="radio" name="category" id="cat_{{ val }}" value="{{ val }}" class="cat-option"
+                         {% if form.category.value == val or forloop.last and not form.category.value %}checked{% endif %}>
+                  <label for="cat_{{ val }}" class="cat-label">
+                    <span class="cat-icon">
+                      {% if val == 'road' %}🛣️
+                      {% elif val == 'water' %}💧
+                      {% elif val == 'garbage' %}🗑️
+                      {% elif val == 'drainage' %}🌊
+                      {% elif val == 'streetlight' %}💡
+                      {% elif val == 'park' %}🌳
+                      {% elif val == 'encroach' %}🚧
+                      {% elif val == 'noise' %}📢
+                      {% else %}📋{% endif %}
+                    </span>
+                    {{ label }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Municipality -->
+            <div class="mb-3">
+              <label class="f-label" for="id_municipality">Municipality <span class="f-required">*</span></label>
+              <select name="municipality" id="id_municipality" class="f-select" required>
+                {% for val, label in form.fields.municipality.choices %}
+                <option value="{{ val }}" {% if form.municipality.value == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Ward -->
+            <div class="mb-3">
+              <label class="f-label" for="id_ward">Ward / Area Name <span class="f-required">*</span></label>
+              <input type="text" name="ward" id="id_ward" class="f-input"
+                     placeholder="e.g. Navrangpura, Sector 12..." required
+                     value="{{ form.ward.value|default:'' }}">
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="f-label" for="id_description">Description <span class="f-required">*</span></label>
+              <textarea name="description" id="id_description" class="f-textarea"
+                        placeholder="Describe the issue in detail — how long has it been there, any hazards, etc." required>{{ form.description.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Image upload dropzone -->
+            <div class="mb-4">
+              <label class="f-label">Photo Evidence <span style="color:#9ca3af;font-weight:500">(optional)</span></label>
+              <div class="dropzone" id="dropzone">
+                <input type="file" name="image" id="id_image" accept="image/*">
+                <div class="dropzone-icon"><i class="fa-solid fa-camera-retro"></i></div>
+                <div class="dropzone-text">Click or drag &amp; drop a photo</div>
+                <div class="dropzone-hint">JPG, PNG, WEBP up to 10 MB</div>
+                <img id="preview-img" src="" alt="Preview">
+              </div>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="goStep(2)">
+              <i class="fa-solid fa-arrow-right"></i> Next: Pin Location
+            </button>
+          </div>
+
+          <!-- =================== STEP 2: Map Location =================== -->
+          <div class="form-step d-none" id="step2">
+
+            <div class="fsection-title"><i class="fa-solid fa-map-location-dot"></i> Pin Your Location</div>
+            <p class="f-hint mb-3">📍 Move the map so the <strong>pin</strong> is exactly on your issue. Tap <strong>Confirm Location</strong> when done.</p>
+
+            <!-- Map wrapper -->
+            <div class="map-wrapper" id="mapWrapper">
+
+              <!-- Search bar (top-floating) -->
+              <div class="map-search-bar" id="mapSearchBar">
+                <div style="position:relative;flex:1;">
+                  <i class="fa-solid fa-magnifying-glass map-search-icon"></i>
+                  <input type="text" id="mapSearchInput" class="map-search-input"
+                         placeholder="Search area, ward, landmark…" autocomplete="off">
+                  <div id="nominatimResults" class="map-search-results"></div>
+                </div>
+                <button type="button" class="map-gps-btn" id="gpsBtn" title="Use my location">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                </button>
+              </div>
+
+              <!-- Leaflet map -->
+              <div id="map"></div>
+
+              <!-- Fixed center pin (Rapido style) -->
+              <div class="map-pin-center" id="mapPin">
+                <svg class="pin-teardrop" viewBox="0 0 38 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 0C8.507 0 0 8.507 0 19c0 14.25 19 31 19 31s19-16.75 19-31C38 8.507 29.493 0 19 0z"
+                        fill="url(#pinGrad)"/>
+                  <circle cx="19" cy="19" r="8" fill="white"/>
+                  <circle cx="19" cy="19" r="5" fill="url(#pinGrad2)"/>
+                  <defs>
+                    <linearGradient id="pinGrad" x1="0" y1="0" x2="38" y2="50" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#4f46e5"/>
+                      <stop offset="1" stop-color="#7c3aed"/>
+                    </linearGradient>
+                    <linearGradient id="pinGrad2" x1="0" y1="0" x2="1" y2="1" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#6366f1"/>
+                      <stop offset="1" stop-color="#a78bfa"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="pin-shadow"></div>
+              </div>
+
+              <!-- Address bar (bottom-floating) -->
+              <div class="map-address-bar" id="mapAddressBar">
+                <div class="addr-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="addr-text">
+                  <div class="addr-label">Issue Location</div>
+                  <div class="addr-value" id="addrValue">Move the map to set location…</div>
+                  <div class="addr-coords" id="addrCoords"></div>
+                </div>
+                <div class="loc-confirmed-badge" id="locConfirmedBadge">
+                  <i class="fa-solid fa-check"></i> Confirmed
+                </div>
+                <button type="button" class="btn-confirm-loc" id="confirmLocBtn" disabled>
+                  <i class="fa-solid fa-check me-1"></i>Confirm
+                </button>
+              </div>
+
+            </div><!-- /map-wrapper -->
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="button" class="btn-submit" style="background:rgba(79,70,229,0.1);color:#4f46e5;box-shadow:none;flex:0 0 auto;width:auto;padding:0.9rem 1.5rem;" onclick="goStep(1)">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="button" class="btn-submit" onclick="goStep(3)" style="flex:1;">
+                <i class="fa-solid fa-arrow-right"></i> Next: Contact Info
+              </button>
+            </div>
+          </div>
+
+          <!-- =================== STEP 3: Contact Info =================== -->
+          <div class="form-step d-none" id="step3">
+
+            <div class="fsection-title"><i class="fa-solid fa-address-card"></i> Contact Information</div>
+            <p class="text-muted small mb-3">So the municipality can follow up with you. Both fields are optional.</p>
+
+            <!-- Phone -->
+            <div class="mb-3">
+              <label class="f-label" for="id_phone">
+                <i class="fa-solid fa-phone me-1 text-primary"></i> Phone Number
+              </label>
+              <input type="tel" name="phone" id="id_phone" class="f-input"
+                     placeholder="+91 98765 43210"
+                     value="{{ form.phone.value|default:'' }}">
+            </div>
+
+            <!-- Email -->
+            <div class="mb-4">
+              <label class="f-label" for="id_email">
+                <i class="fa-solid fa-envelope me-1 text-primary"></i> Email Address
+              </label>
+              <input type="email" name="email" id="id_email" class="f-input"
+                     placeholder="you@example.com"
+                     value="{{ form.email.value|default:'' }}">
+              <p class="f-hint">We'll notify you when your complaint status changes.</p>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn-submit" style="background:rgba(79,70,229,0.1);color:#4f46e5;box-shadow:none;flex:0 0 auto;width:auto;padding:0.9rem 1.5rem;" onclick="goStep(2)">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="button" class="btn-submit" onclick="goStep(4)" style="flex:1;">
+                <i class="fa-solid fa-arrow-right"></i> Review &amp; Submit
+              </button>
+            </div>
+          </div>
+
+          <!-- =================== STEP 4: Review =================== -->
+          <div class="form-step d-none" id="step4">
+
+            <div class="fsection-title"><i class="fa-solid fa-clipboard-check"></i> Review &amp; Submit</div>
+
+            <!-- Summary panel -->
+            <div style="background:#f8fafc;border-radius:16px;border:1px solid #e5e7eb;padding:1.25rem;margin-bottom:1.5rem;">
+              <div class="row g-2" id="review-panel" style="font-size:0.85rem;">
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Title</span>
+                  <p id="r-title" class="mb-0 fw-600" style="font-weight:600;color:#111827;">—</p>
+                </div>
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Category</span>
+                  <p id="r-category" class="mb-0 fw-600" style="font-weight:600;color:#111827;">—</p>
+                </div>
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Municipality</span>
+                  <p id="r-municipality" class="mb-0 fw-600" style="font-weight:600;color:#111827;">—</p>
+                </div>
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Ward</span>
+                  <p id="r-ward" class="mb-0 fw-600" style="font-weight:600;color:#111827;">—</p>
+                </div>
+                <div class="col-12">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Location</span>
+                  <p id="r-location" class="mb-0 fw-600" style="font-weight:600;color:#111827;">—</p>
+                </div>
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Phone</span>
+                  <p id="r-phone" class="mb-0" style="color:#374151;">—</p>
+                </div>
+                <div class="col-6">
+                  <span style="color:#9ca3af;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;">Email</span>
+                  <p id="r-email" class="mb-0" style="color:#374151;">—</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn-submit" style="background:rgba(79,70,229,0.1);color:#4f46e5;box-shadow:none;flex:0 0 auto;width:auto;padding:0.9rem 1.5rem;" onclick="goStep(3)">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="submit" class="btn-submit" style="flex:1;">
+                <i class="fa-solid fa-paper-plane"></i> Submit Complaint
+              </button>
+            </div>
+
+            <a href="{% url 'home' %}" class="btn-cancel">
+              <i class="fa-solid fa-xmark me-1"></i> Cancel and go back
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS (free, open source) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ====== Multi-step navigation ====== */
+let currentStep = 1;
+const totalSteps = 4;
+
+function goStep(n) {
+  // Validate step 1 before advancing
+  if (n > currentStep && currentStep === 1) {
+    const title = document.getElementById('id_title').value.trim();
+    const desc  = document.getElementById('id_description').value.trim();
+    const ward  = document.getElementById('id_ward').value.trim();
+    if (!title || !desc || !ward) {
+      alert('Please fill in Title, Description, and Ward before continuing.');
+      return;
+    }
+  }
+
+  // Hide current, show next
+  document.getElementById('step' + currentStep).classList.add('d-none');
+  document.getElementById('step' + n).classList.remove('d-none');
+
+  // Update stepper dots
+  for (let i = 1; i <= totalSteps; i++) {
+    const dot  = document.getElementById('st' + i);
+    const line = document.getElementById('sl' + i);
+    dot.classList.remove('active', 'done');
+    if (line) line.classList.remove('done');
+    if (i < n)  { dot.classList.add('done'); if (line) line.classList.add('done'); }
+    if (i === n) dot.classList.add('active');
+  }
+
+  currentStep = n;
+
+  // Init map when landing on step 2
+  if (n === 2 && !window.mapInitialised) { initMap(); }
+
+  // Populate review panel when landing on step 4
+  if (n === 4) { fillReview(); }
+
+  // Scroll to top of form
+  document.querySelector('.form-shell').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ====== FREE MAP: Leaflet + OpenStreetMap + Nominatim ====== */
+let lmap;
+let geocodeTimer = null;
+let searchResultsEl;
+
+function initMap() {
+  window.mapInitialised = true;
+
+  // Init Leaflet map — Ahmedabad center
+  lmap = L.map('map', { zoomControl: false }).setView([23.0225, 72.5714], 14);
+  L.control.zoom({ position: 'bottomright' }).addTo(lmap);
+
+  // Free CartoDB Voyager tiles (beautiful, no key)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 20
+  }).addTo(lmap);
+
+  const pin        = document.getElementById('mapPin');
+  const addrV      = document.getElementById('addrValue');
+  const addrC      = document.getElementById('addrCoords');
+  const confirmBtn = document.getElementById('confirmLocBtn');
+  const badge      = document.getElementById('locConfirmedBadge');
+  searchResultsEl  = document.getElementById('nominatimResults');
+
+  // Lift pin while dragging
+  lmap.on('movestart', () => {
+    pin.classList.add('dragging');
+    addrV.textContent = 'Locating…';
+    addrC.textContent = '';
+    confirmBtn.disabled = true;
+    badge.classList.remove('show');
+    confirmBtn.style.display = '';
+  });
+
+  // Reverse geocode when map stops
+  lmap.on('moveend', () => {
+    pin.classList.remove('dragging');
+    const { lat, lng } = lmap.getCenter();
+    addrC.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+    reverseGeocode(lat, lng);
+  });
+
+  // Confirm Location button
+  confirmBtn.addEventListener('click', () => {
+    const { lat, lng } = lmap.getCenter();
+    document.getElementById('id_latitude').value  = lat.toFixed(6);
+    document.getElementById('id_longitude').value = lng.toFixed(6);
+    document.getElementById('id_address').value   = addrV.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.style.display = 'none';
+    badge.classList.add('show');
+  });
+
+  // GPS button
+  document.getElementById('gpsBtn').addEventListener('click', () => {
+    const btn = document.getElementById('gpsBtn');
+    btn.classList.add('locating');
+    navigator.geolocation.getCurrentPosition(pos => {
+      lmap.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 1.2 });
+      btn.classList.remove('locating');
+    }, () => {
+      btn.classList.remove('locating');
+      addrV.textContent = 'Could not get GPS location.';
+    }, { timeout: 8000 });
+  });
+
+  // Auto-geolocate on open
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      p => lmap.setView([p.coords.latitude, p.coords.longitude], 16),
+      () => {}
+    );
+  }
+
+  // Search bar — Nominatim
+  const searchInput = document.getElementById('mapSearchInput');
+  searchInput.addEventListener('input', () => {
+    clearTimeout(geocodeTimer);
+    const q = searchInput.value.trim();
+    if (q.length < 3) { hideResults(); return; }
+    geocodeTimer = setTimeout(() => searchNominatim(q), 420);
+  });
+  document.addEventListener('click', e => {
+    if (!searchInput.contains(e.target) && !searchResultsEl.contains(e.target)) hideResults();
+  });
+}
+
+function reverseGeocode(lat, lng) {
+  const addrV      = document.getElementById('addrValue');
+  const confirmBtn = document.getElementById('confirmLocBtn');
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1', {
+    headers: { 'Accept-Language': 'en', 'User-Agent': 'CivicReporterApp/1.0' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    const a = data.address || {};
+    // Build clean address: road, suburb/area, city, state
+    const parts = [
+      a.road || a.pedestrian || a.footway,
+      a.suburb || a.neighbourhood || a.quarter || a.village,
+      a.city || a.town || a.county || a.state_district,
+      a.state
+    ].filter(Boolean);
+    addrV.textContent = parts.length ? parts.join(', ') : (data.display_name || 'Unknown area');
+    confirmBtn.disabled = false;
+  })
+  .catch(() => { addrV.textContent = 'Location selected'; confirmBtn.disabled = false; });
+}
+
+function searchNominatim(query) {
+  searchResultsEl.style.display = 'block';
+  searchResultsEl.innerHTML = '<div class="map-search-result-item"><i class="fa-solid fa-spinner fa-spin"></i>&nbsp;Searching…</div>';
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=5&countrycodes=in', {
+    headers: { 'Accept-Language': 'en', 'User-Agent': 'CivicReporterApp/1.0' }
+  })
+  .then(r => r.json())
+  .then(results => {
+    if (!results.length) {
+      searchResultsEl.innerHTML = '<div class="map-search-result-item" style="color:#9ca3af">No results found</div>';
+      return;
+    }
+    searchResultsEl.innerHTML = results.map(x =>
+      '<div class="map-search-result-item" onclick="flyToResult(' + x.lat + ',' + x.lon + ')">' +
+      '<i class="fa-solid fa-location-dot"></i><span>' + x.display_name + '</span></div>'
+    ).join('');
+  })
+  .catch(() => {
+    searchResultsEl.innerHTML = '<div class="map-search-result-item" style="color:#9ca3af">Search failed.</div>';
+  });
+}
+
+function flyToResult(lat, lng) {
+  lmap.flyTo([parseFloat(lat), parseFloat(lng)], 17, { duration: 1 });
+  document.getElementById('mapSearchInput').value = '';
+  hideResults();
+}
+
+function hideResults() {
+  if (searchResultsEl) searchResultsEl.style.display = 'none';
+}
+
+/* ====== Image dropzone preview ====== */
+const fileInput = document.getElementById('id_image');
+const previewImg = document.getElementById('preview-img');
+const dropzone = document.getElementById('dropzone');
+
+fileInput.addEventListener('change', function() {
+  if (this.files && this.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
+    };
+    reader.readAsDataURL(this.files[0]);
+  }
+});
+
+['dragover','dragenter'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.add('drag-over');
+}));
+['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.remove('drag-over');
+}));
+dropzone.addEventListener('drop', function(e) {
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    fileInput.files = transfer.files;
+    fileInput.dispatchEvent(new Event('change'));
+  }
+});
+
+/* ====== Review panel fill ====== */
+function fillReview() {
+  const catVal  = document.querySelector('input[name="category"]:checked');
+  const muniSel = document.getElementById('id_municipality');
+
+  document.getElementById('r-title').textContent       = document.getElementById('id_title').value || '—';
+  document.getElementById('r-category').textContent    = catVal ? catVal.nextElementSibling.textContent.trim() : '—';
+  document.getElementById('r-municipality').textContent= muniSel.options[muniSel.selectedIndex].text;
+  document.getElementById('r-ward').textContent        = document.getElementById('id_ward').value || '—';
+  document.getElementById('r-phone').textContent       = document.getElementById('id_phone').value || 'Not provided';
+  document.getElementById('r-email').textContent       = document.getElementById('id_email').value || 'Not provided';
+
+  const addr = document.getElementById('id_address') ? document.getElementById('id_address').value : '';
+  document.getElementById('r-location').textContent = addr || 'Not confirmed on map';
+}
+</script>
+{% endblock %}

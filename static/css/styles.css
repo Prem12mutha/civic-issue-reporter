@@ -1,0 +1,239 @@
+/* ============================================================
+   CIVIC REPORTER — GLOBAL CSS
+   Loads AFTER Bootstrap — uses higher specificity / !important
+   where needed to override Bootstrap defaults.
+   ============================================================ */
+
+/* ---------- Fonts + Reset ---------- */
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #3730a3;
+  --violet: #7c3aed;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---------- Navbar ---------- */
+#mainNav {
+  background: rgba(13, 8, 33, 0.97) !important;
+  background-color: rgba(13, 8, 33, 0.97) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0.75rem 0;
+  transition: all 0.3s ease;
+}
+#mainNav.nav-scrolled {
+  background: rgb(13, 8, 33) !important;
+  background-color: rgb(13, 8, 33) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  padding: 0.55rem 0;
+}
+
+/* Brand */
+.navbar-brand-custom {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff !important;
+  letter-spacing: -0.5px;
+}
+.brand-icon-wrap {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(79,70,229,0.5);
+  flex-shrink: 0;
+}
+.brand-icon-sm { width: 28px; height: 28px; border-radius: 8px; font-size: 0.75rem; }
+.brand-accent { color: #a5b4fc; }
+
+/* Nav links */
+.nav-link-custom {
+  color: rgba(255,255,255,0.65) !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.nav-link-custom:hover, .nav-link-custom.active {
+  color: #fff !important;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Nav CTA button */
+.nav-cta-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff !important;
+  font-size: 0.85rem; font-weight: 700;
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+  border: none;
+  cursor: pointer;
+}
+.nav-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79,70,229,0.55);
+  color: #fff !important;
+}
+
+/* Nav user button */
+.nav-user-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 0.85rem; font-weight: 600;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.07) !important;
+}
+.nav-user-btn:hover { color: #fff !important; background: rgba(255,255,255,0.15) !important; }
+.nav-user-btn::after { border-top-color: rgba(255,255,255,0.5) !important; }
+
+/* User avatar initials circle */
+.nav-avatar {
+  width: 26px; height: 26px;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+
+/* Dropdown */
+.nav-dropdown {
+  background: rgba(20,16,40,0.97) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 16px !important;
+  padding: 0.5rem !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(20px);
+  min-width: 180px;
+}
+.nav-dropdown .dropdown-item {
+  color: rgba(255,255,255,0.75) !important;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem; font-weight: 500;
+  transition: all 0.18s ease;
+}
+.nav-dropdown .dropdown-item:hover {
+  background: rgba(79,70,229,0.2) !important;
+  color: #fff !important;
+}
+.nav-dropdown .dropdown-item.text-danger { color: #f87171 !important; }
+.nav-dropdown .dropdown-item.text-danger:hover { background: rgba(244,63,94,0.15) !important; }
+.nav-dropdown .dropdown-divider { border-color: rgba(255,255,255,0.08) !important; }
+
+/* Navbar toggler for dark bg */
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255%2c255%2c255%2c0.7%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+/* ---------- Shared button overrides ---------- */
+.btn-primary {
+  background: linear-gradient(135deg,#4f46e5,#7c3aed) !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.35) !important;
+  transition: all 0.25s ease !important;
+}
+.btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(79,70,229,0.5) !important;
+}
+
+.btn-outline-primary {
+  border: 2px solid #4f46e5 !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+  transition: all 0.25s ease !important;
+  background: transparent !important;
+}
+.btn-outline-primary:hover {
+  background: linear-gradient(135deg,#4f46e5,#7c3aed) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ---------- Forms ---------- */
+.form-control, .form-select {
+  border-radius: 12px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  padding: 0.7rem 1rem !important;
+  font-size: 0.9rem !important;
+  transition: all 0.25s ease !important;
+  background-color: #f8fafc !important;
+}
+.form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 4px rgba(79,70,229,0.12) !important;
+  border-color: #4f46e5 !important;
+  background-color: #fff !important;
+}
+
+/* ---------- Glass cards (auth pages, submit) ---------- */
+.glass-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(79,70,229,0.1);
+  border-radius: 24px;
+  box-shadow: 0 12px 50px rgba(79,70,229,0.1);
+}
+
+/* ---------- Other page alert/badge colours ---------- */
+.badge.bg-danger  { background: linear-gradient(135deg,#f43f5e,#e11d48) !important; }
+.badge.bg-warning { background: linear-gradient(135deg,#f59e0b,#d97706) !important; color:#fff!important; }
+.badge.bg-success { background: linear-gradient(135deg,#10b981,#059669) !important; }
+
+/* ---------- Footer ---------- */
+.site-footer {
+  background: #0d0821;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 2rem 0;
+}
+.footer-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem;
+}
+.footer-copy { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
+.footer-links { display: flex; gap: 1.25rem; }
+.footer-links a {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem; font-weight: 600;
+  text-decoration: none; transition: color 0.2s;
+}
+.footer-links a:hover { color: #a5b4fc; }
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  #mainNav { padding: 0.65rem 0; }
+  .footer-inner { flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; }
+}

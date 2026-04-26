@@ -1,0 +1,823 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Civic Issue Reporter — AMC & GMC{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ========== PAGE-SCOPED OVERRIDES (higher specificity than Bootstrap) ========== */
+
+/* Particle canvas */
+#particle-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+
+/* ---- Hero ---- */
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d0821 0%, #1e0b4a 35%, #3b1fa8 70%, #6d28d9 100%);
+  padding: 5.5rem 0 11rem;
+  color: #fff;
+}
+
+.hero-noise {
+  position: absolute; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+.hero-glow-1 {
+  position: absolute; z-index: 0;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%);
+  top: -200px; left: -150px;
+  animation: glowPulse 8s ease-in-out infinite;
+}
+.hero-glow-2 {
+  position: absolute; z-index: 0;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,70,229,0.3) 0%, transparent 70%);
+  bottom: -150px; right: -100px;
+  animation: glowPulse 10s ease-in-out infinite reverse;
+}
+.hero-glow-3 {
+  position: absolute; z-index: 0;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 70%);
+  top: 40%; left: 55%;
+  animation: glowPulse 6s ease-in-out infinite 2s;
+}
+@keyframes glowPulse {
+  0%,100% { transform: scale(1) translateY(0); opacity: 1; }
+  50%      { transform: scale(1.12) translateY(-20px); opacity: 0.75; }
+}
+
+.hero-inner { position: relative; z-index: 2; }
+
+/* Eye-brow */
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.9);
+  font-size: 0.82rem; font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  margin-bottom: 1.5rem;
+}
+.hero-pill-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: pingDot 1.5s cubic-bezier(0,0,0.2,1) infinite;
+}
+@keyframes pingDot {
+  75%,100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Heading */
+.hero-h1 {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin-bottom: 1.25rem;
+}
+.hero-h1-highlight {
+  background: linear-gradient(90deg, #fde68a 0%, #fb923c 50%, #f472b6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.65);
+  max-width: 480px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.75;
+}
+
+/* Buttons */
+.btn-hero-p, .btn-hero-s {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  font-size: 0.95rem; font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-hero-p {
+  background: linear-gradient(135deg, #fde68a 0%, #f97316 100%);
+  color: #1a0533 !important;
+  box-shadow: 0 8px 32px rgba(249,115,22,0.45), 0 2px 8px rgba(0,0,0,0.25);
+}
+.btn-hero-p:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 16px 48px rgba(249,115,22,0.55), 0 4px 12px rgba(0,0,0,0.3);
+  color: #1a0533 !important;
+}
+.btn-hero-s {
+  background: rgba(255,255,255,0.12);
+  color: #fff !important;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(12px);
+}
+.btn-hero-s:hover {
+  background: rgba(255,255,255,0.22);
+  transform: translateY(-4px);
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.5);
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.stat-cell {
+  flex: 1;
+  min-width: 0;
+  padding: 1.2rem 0.75rem;
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  position: relative;
+}
+.stat-cell + .stat-cell {
+  border-left: 1px solid rgba(255,255,255,0.12);
+}
+.stat-cell .num {
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2rem; font-weight: 900;
+  line-height: 1;
+  color: #fff;
+}
+.stat-cell .lbl {
+  display: block;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+.stat-cell.c-amber .num { color: #fbbf24; }
+.stat-cell.c-cyan  .num { color: #22d3ee; }
+.stat-cell.c-green .num { color: #34d399; }
+
+/* Wave separator */
+.hero-wave {
+  position: absolute; bottom: -2px; left: 0; width: 100%; z-index: 1;
+  line-height: 0;
+}
+.hero-wave svg { display: block; }
+
+/* ---- How It Works ---- */
+.hiw-section {
+  background: #fff;
+  padding: 5rem 0;
+}
+.hiw-badge {
+  display: inline-block;
+  background: linear-gradient(135deg,#ede9fe,#ddd6fe);
+  color: #5b21b6; font-size: 0.75rem; font-weight: 800;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.4rem 1rem; border-radius: 999px;
+  margin-bottom: 1rem;
+}
+.hiw-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-weight: 900; letter-spacing: -1px; color: #0f172a;
+}
+.step-card-v2 {
+  background: linear-gradient(145deg, #f8faff 0%, #f0f4ff 100%);
+  border: 1px solid rgba(79,70,229,0.1);
+  border-radius: 24px;
+  padding: 2rem 1.75rem;
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  height: 100%;
+}
+.step-card-v2:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 24px 60px rgba(79,70,229,0.15);
+  border-color: rgba(79,70,229,0.2);
+}
+.step-num {
+  position: absolute; top: -16px; left: 24px;
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  color: #fff; font-size: 0.85rem; font-weight: 800;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+}
+.step-icon-v2 {
+  width: 60px; height: 60px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; margin-bottom: 1.25rem;
+}
+.step-icon-v2.icon-submit  { background: rgba(79,70,229,0.1);  color: #4f46e5; }
+.step-icon-v2.icon-track   { background: rgba(245,158,11,0.1); color: #d97706; }
+.step-icon-v2.icon-resolve { background: rgba(16,185,129,0.1); color: #059669; }
+
+/* ---- Community Feed ---- */
+.feed-section { background: #f8fafc; padding: 4rem 0 6rem; }
+
+.feed-header-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: linear-gradient(135deg,#ede9fe,#ddd6fe);
+  color: #5b21b6; font-size: 0.75rem; font-weight: 800;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.4rem 1rem; border-radius: 999px;
+  margin-bottom: 0.75rem;
+}
+.feed-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 900; letter-spacing: -1px; color: #0f172a;
+}
+
+/* Filter bar v2 */
+.filter-bar-v2 {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(79,70,229,0.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+}
+.filter-label-v2 {
+  font-size: 0.8rem; font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 1px;
+  white-space: nowrap;
+}
+.fpill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  background: #f8fafc;
+  text-decoration: none;
+  transition: all 0.22s ease;
+  cursor: pointer;
+}
+.fpill:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+.fpill.active-all     { background: #4f46e5; color: #fff !important; border-color: transparent; box-shadow: 0 4px 14px rgba(79,70,229,0.4); }
+.fpill.active-pending { background: linear-gradient(135deg,#f43f5e,#e11d48); color: #fff !important; border-color: transparent; box-shadow: 0 4px 14px rgba(244,63,94,0.4); }
+.fpill.active-progress{ background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff !important; border-color: transparent; box-shadow: 0 4px 14px rgba(245,158,11,0.4); }
+.fpill.active-resolved{ background: linear-gradient(135deg,#10b981,#059669); color: #fff !important; border-color: transparent; box-shadow: 0 4px 14px rgba(16,185,129,0.4); }
+
+/* Complaint Card v2 */
+.ccard {
+  background: #fff;
+  border-radius: 22px;
+  border: 1px solid rgba(79,70,229,0.08);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  height: 100%;
+  animation: cardIn 0.5s ease both;
+}
+.ccard:hover {
+  transform: translateY(-12px) scale(1.015);
+  box-shadow: 0 28px 70px rgba(79,70,229,0.18);
+  border-color: rgba(79,70,229,0.22);
+}
+@keyframes cardIn {
+  from { opacity:0; transform: translateY(28px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* Card top image zone */
+.ccard-img-zone {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+  background: linear-gradient(145deg,#ede9fe,#c7d2fe);
+}
+.ccard-img-zone img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.ccard:hover .ccard-img-zone img { transform: scale(1.06); }
+
+.ccard-img-placeholder {
+  height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+}
+
+/* Status chip on card */
+.ccard-chip {
+  position: absolute; top: 14px; left: 14px; z-index: 10;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.75rem; font-weight: 800;
+  padding: 0.32em 0.9em;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  backdrop-filter: blur(6px);
+}
+.chip-pending  { background: linear-gradient(135deg,#f43f5e,#e11d48); color:#fff; }
+.chip-progress { background: linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+.chip-resolved { background: linear-gradient(135deg,#10b981,#059669); color:#fff; }
+
+/* Card body */
+.ccard-body { padding: 1.4rem; flex: 1; display: flex; flex-direction: column; }
+
+.muni-pill {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem; font-weight: 800;
+  padding: 0.28em 0.8em; border-radius: 999px;
+}
+.muni-amc { background: #ede9fe; color: #5b21b6; }
+.muni-gmc { background: #d1fae5; color: #065f46; }
+
+.ccard-title {
+  font-weight: 800; font-size: 1.05rem;
+  color: #0f172a; line-height: 1.35;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  margin: 0.6rem 0 0.4rem;
+}
+.ccard-meta {
+  display: flex; flex-direction: column; gap: 0.2rem;
+  font-size: 0.8rem; color: #94a3b8; font-weight: 500;
+}
+.ccard-meta i { color: #a5b4fc; width: 14px; }
+
+.ccard-footer {
+  border-top: 1px solid #f1f5f9;
+  padding: 1rem 1.4rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ccard-date { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+.ccard-link {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; font-weight: 700;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  color: #fff !important;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+}
+.ccard-link:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,70,229,0.5); }
+
+/* Empty state */
+.empty-box {
+  background: #fff;
+  border: 2px dashed #c7d2fe;
+  border-radius: 24px;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.empty-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg,#ede9fe,#ddd6fe);
+  margin: 0 auto 1.5rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #7c3aed;
+}
+
+/* Report CTA banner */
+.cta-banner {
+  background: linear-gradient(135deg, #1e0b4a 0%, #4f46e5 60%, #7c3aed 100%);
+  border-radius: 28px;
+  padding: 3rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4rem;
+}
+.cta-banner::before {
+  content:'';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 70% 50%, rgba(139,92,246,0.4) 0%, transparent 60%);
+}
+.cta-banner-inner { position: relative; z-index: 1; }
+
+/* ---- Guest Lock Screen ---- */
+.guest-lock-box {
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(79,70,229,0.1);
+  box-shadow: 0 8px 40px rgba(79,70,229,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.lock-icon-wrap {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.75rem; color: #fff;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 8px 28px rgba(79,70,229,0.45);
+  animation: lockBounce 2s ease-in-out infinite;
+}
+@keyframes lockBounce {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.lock-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.6rem; font-weight: 900;
+  letter-spacing: -0.5px; color: #0f172a;
+  margin-bottom: 0.6rem;
+}
+.lock-sub {
+  color: #64748b; font-size: 0.95rem; line-height: 1.7;
+  max-width: 440px; margin: 0 auto;
+}
+/* Blurred fake card row */
+.lock-preview {
+  display: flex; gap: 1rem;
+  margin-top: 2.5rem;
+  pointer-events: none;
+  filter: blur(4px);
+  opacity: 0.35;
+}
+.lock-preview-card {
+  flex: 1; height: 180px;
+  background: linear-gradient(145deg,#ede9fe,#ddd6fe);
+  border-radius: 16px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ======================================================
+     HERO
+====================================================== -->
+<section class="page-hero">
+  <div class="hero-noise"></div>
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-glow-3"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="container hero-inner text-center">
+
+    <!-- Eyebrow pill -->
+    <div class="hero-pill">
+      <span class="hero-pill-dot"></span>
+      Trusted civic platform for Ahmedabad &amp; Gandhinagar
+    </div>
+
+    <!-- Heading -->
+    <h1 class="hero-h1">
+      Report &amp; Track<br>
+      <span class="hero-h1-highlight">Civic Issues</span><br>
+      in Real&nbsp;Time
+    </h1>
+
+    <p class="hero-sub">
+      Submit complaints about roads, water, drainage, garbage &amp; more.<br>
+      Directly to <strong style="color:#fde68a">AMC</strong> &amp; <strong style="color:#86efac">GMC</strong> — fast, transparent, accountable.
+    </p>
+
+    <!-- CTA Buttons -->
+    <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
+      {% if not user.is_authenticated %}
+      <a href="{% url 'register' %}" class="btn-hero-p">
+        <i class="fa-solid fa-rocket"></i> Get Started — Free
+      </a>
+      <a href="{% url 'login' %}" class="btn-hero-s">
+        <i class="fa-solid fa-right-to-bracket"></i> Login
+      </a>
+      {% else %}
+      <a href="{% url 'submit_complaint' %}" class="btn-hero-p">
+        <i class="fa-solid fa-plus"></i> Report an Issue
+      </a>
+      <a href="{% url 'profile' %}" class="btn-hero-s">
+        <i class="fa-solid fa-list-check"></i> My Complaints
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Live Stats Row -->
+    <div class="stats-row mx-auto">
+      <div class="stat-cell">
+        <span class="num" id="s-total">{{ total }}</span>
+        <span class="lbl">Total</span>
+      </div>
+      <div class="stat-cell c-amber">
+        <span class="num" id="s-pending">{{ pending }}</span>
+        <span class="lbl">Pending</span>
+      </div>
+      <div class="stat-cell c-cyan">
+        <span class="num" id="s-progress">{{ progress }}</span>
+        <span class="lbl">In Progress</span>
+      </div>
+      <div class="stat-cell c-green">
+        <span class="num" id="s-resolved">{{ resolved }}</span>
+        <span class="lbl">Resolved</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SVG Wave -->
+  <div class="hero-wave">
+    <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="width:100%;height:100px;display:block;">
+      <path d="M0,64 C240,120 480,0 720,64 C960,128 1200,32 1440,64 L1440,120 L0,120 Z" fill="#ffffff"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ======================================================
+     HOW IT WORKS
+====================================================== -->
+<section class="hiw-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="hiw-badge"><i class="fa-solid fa-signs-post me-1"></i> How It Works</div>
+      <h2 class="hiw-title">Three simple steps to fix your city</h2>
+      <p class="text-muted mt-2" style="max-width:480px;margin:auto;">No phone calls, no queues. Submit once and track your complaint until it's resolved.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="step-card-v2">
+          <div class="step-num">1</div>
+          <div class="step-icon-v2 icon-submit"><i class="fa-solid fa-pen-to-square"></i></div>
+          <h5 class="fw-800 mb-2" style="font-weight:800">Submit a Report</h5>
+          <p class="text-muted small mb-0">Add a title, description, photo, and your ward. Takes under 60 seconds.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card-v2">
+          <div class="step-num">2</div>
+          <div class="step-icon-v2 icon-track"><i class="fa-solid fa-satellite-dish"></i></div>
+          <h5 class="fw-800 mb-2" style="font-weight:800">Track Live Status</h5>
+          <p class="text-muted small mb-0">Watch your complaint move from Pending → In Progress → Resolved in real time.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card-v2">
+          <div class="step-num">3</div>
+          <div class="step-icon-v2 icon-resolve"><i class="fa-solid fa-circle-check"></i></div>
+          <h5 class="fw-800 mb-2" style="font-weight:800">Issue Resolved</h5>
+          <p class="text-muted small mb-0">Municipal teams act on the complaint and mark it resolved. Your city gets better.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================
+     COMMUNITY FEED
+====================================================== -->
+<section class="feed-section">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+      <div>
+        <div class="feed-header-badge"><i class="fa-solid fa-signal me-1"></i> Live Feed</div>
+        <h2 class="feed-title mb-0">Community Issues</h2>
+        <p class="text-muted small mt-1 mb-0">Browse all civic complaints reported by fellow citizens</p>
+      </div>
+      {% if user.is_authenticated %}
+      <a href="{% url 'submit_complaint' %}" class="btn-hero-p" style="padding:0.65rem 1.5rem;font-size:0.875rem;">
+        <i class="fa-solid fa-plus"></i> Report Issue
+      </a>
+      {% endif %}
+    </div>
+
+    {% if user.is_authenticated %}
+
+    <!-- Filter bar -->
+    <div class="filter-bar-v2 mb-4">
+      <span class="filter-label-v2"><i class="fa-solid fa-sliders me-1"></i> Filter</span>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'home' %}{% if current_municipality %}?municipality={{ current_municipality }}{% endif %}"
+           class="fpill {% if not current_status %}active-all{% endif %}">
+          <i class="fa-solid fa-border-all"></i> All
+        </a>
+        <a href="?status=Pending{% if current_municipality %}&municipality={{ current_municipality }}{% endif %}"
+           class="fpill {% if current_status == 'Pending' %}active-pending{% endif %}">
+          <i class="fa-solid fa-clock"></i> Pending
+        </a>
+        <a href="?status=In+Progress{% if current_municipality %}&municipality={{ current_municipality }}{% endif %}"
+           class="fpill {% if current_status == 'In Progress' %}active-progress{% endif %}">
+          <i class="fa-solid fa-spinner"></i> In Progress
+        </a>
+        <a href="?status=Resolved{% if current_municipality %}&municipality={{ current_municipality }}{% endif %}"
+           class="fpill {% if current_status == 'Resolved' %}active-resolved{% endif %}">
+          <i class="fa-solid fa-check-circle"></i> Resolved
+        </a>
+      </div>
+      <div class="ms-auto">
+        <form method="GET" id="muni-form">
+          {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+          <select name="municipality" class="form-select form-select-sm" style="border-radius:12px;min-width:175px;font-size:0.83rem;font-weight:600;"
+                  onchange="document.getElementById('muni-form').submit()">
+            <option value="">🌆 All Municipalities</option>
+            <option value="AMC" {% if current_municipality == 'AMC' %}selected{% endif %}>🏙 Ahmedabad (AMC)</option>
+            <option value="GMC" {% if current_municipality == 'GMC' %}selected{% endif %}>🌿 Gandhinagar (GMC)</option>
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for complaint in complaints %}
+      <div class="col" style="animation-delay:{{ forloop.counter0 }}00ms">
+        <div class="ccard">
+
+          <!-- Image zone -->
+          <div class="ccard-img-zone">
+            <!-- Status chip -->
+            {% if complaint.status == 'Pending' %}
+              <div class="ccard-chip chip-pending"><i class="fa-solid fa-clock"></i> Pending</div>
+            {% elif complaint.status == 'In Progress' %}
+              <div class="ccard-chip chip-progress"><i class="fa-solid fa-spinner fa-spin-pulse"></i> In Progress</div>
+            {% else %}
+              <div class="ccard-chip chip-resolved"><i class="fa-solid fa-check-circle"></i> Resolved</div>
+            {% endif %}
+
+            {% if complaint.image %}
+              <img src="{{ complaint.image.url }}" alt="{{ complaint.title }}">
+            {% else %}
+              <div class="ccard-img-placeholder">
+                <i class="fa-solid fa-image fa-2x" style="color:#c7d2fe"></i>
+                <span style="font-size:0.75rem;color:#94a3b8">No image attached</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Body -->
+          <div class="ccard-body">
+            <div class="d-flex justify-content-between align-items-center">
+              {% if complaint.municipality == 'AMC' %}
+                <span class="muni-pill muni-amc"><i class="fa-solid fa-city fa-xs"></i> AMC</span>
+              {% else %}
+                <span class="muni-pill muni-gmc"><i class="fa-solid fa-leaf fa-xs"></i> GMC</span>
+              {% endif %}
+              <span style="font-size:0.72rem;color:#94a3b8;font-weight:600">
+                <i class="fa-regular fa-calendar me-1"></i>{{ complaint.created_at|date:"M d, Y" }}
+              </span>
+            </div>
+
+            <h3 class="ccard-title">{{ complaint.title }}</h3>
+
+            <div class="ccard-meta">
+              <span><i class="fa-solid fa-location-dot"></i> {{ complaint.ward }}</span>
+              <span><i class="fa-solid fa-user"></i> {{ complaint.user.username }}</span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="ccard-footer">
+            <span class="ccard-date">
+              <i class="fa-regular fa-clock me-1"></i>{{ complaint.created_at|timesince }} ago
+            </span>
+            <a href="{% url 'complaint_detail' complaint.pk %}" class="ccard-link">
+              View <i class="fa-solid fa-arrow-right fa-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="empty-box">
+          <div class="empty-icon"><i class="fa-regular fa-folder-open"></i></div>
+          <h4 class="fw-800 mb-2" style="font-weight:800">No issues found</h4>
+          <p class="text-muted mb-4">No complaints match your current filters. Try clearing them.</p>
+          <a href="{% url 'home' %}" class="fpill active-all" style="text-decoration:none;display:inline-flex;">
+            <i class="fa-solid fa-rotate-left"></i> Clear Filters
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+
+    <!-- ===== GUEST LOCK SCREEN ===== -->
+    <div class="guest-lock-box">
+      <div class="lock-icon-wrap">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h3 class="lock-title">Login to View Complaints</h3>
+      <p class="lock-sub">The community feed is available to registered citizens only.<br>Sign in or create a free account to browse and report issues.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+        <a href="{% url 'login' %}" class="btn-hero-p" style="padding:0.75rem 2rem;font-size:0.95rem;">
+          <i class="fa-solid fa-right-to-bracket"></i> Login to Continue
+        </a>
+        <a href="{% url 'register' %}" class="btn-hero-s" style="padding:0.75rem 2rem;font-size:0.95rem;background:rgba(79,70,229,0.1);color:#4f46e5;border-color:rgba(79,70,229,0.3);">
+          <i class="fa-solid fa-user-plus"></i> Create Free Account
+        </a>
+      </div>
+      <!-- Blurred preview cards -->
+      <div class="lock-preview">
+        <div class="lock-preview-card"></div>
+        <div class="lock-preview-card"></div>
+        <div class="lock-preview-card"></div>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ---- Count-up animation ---- */
+function countUp(el, end, ms) {
+  if (!el || !end) return;
+  let cur = 0, step = Math.max(1, Math.ceil(end / (ms/16)));
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, end);
+    el.textContent = cur;
+    if (cur >= end) clearInterval(t);
+  }, 16);
+}
+window.addEventListener('DOMContentLoaded', () => {
+  countUp(document.getElementById('s-total'),    {{ total }},    1000);
+  countUp(document.getElementById('s-pending'),  {{ pending }},  1000);
+  countUp(document.getElementById('s-progress'), {{ progress }}, 1000);
+  countUp(document.getElementById('s-resolved'), {{ resolved }}, 1000);
+});
+
+/* ---- Particle canvas ---- */
+(function(){
+  const canvas = document.getElementById('particle-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 55; i++) {
+    particles.push({
+      x: Math.random() * 1600, y: Math.random() * 600,
+      r: Math.random() * 1.8 + 0.4,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      a: Math.random() * 0.6 + 0.15
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ---- Navbar scroll shrink ---- */
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('nav-scrolled', window.scrollY > 40);
+});
+</script>
+{% endblock %}

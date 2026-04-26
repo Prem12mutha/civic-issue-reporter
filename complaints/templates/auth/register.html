@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden glass-card">
+                <div class="card-header border-0 text-center py-4" style="background: var(--primary-gradient); color: white;">
+                    <h3 class="mb-0 fw-bold"><i class="fa-solid fa-user-plus me-2"></i> Create an Account</h3>
+                    <p class="text-white-50 small mt-2 mb-0">Join tracking civic issues in AMC & GMC.</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">Register Now</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light border-0 text-center py-3">
+                    <p class="mb-0 text-muted small">Already have an account? <a href="{% url 'login' %}" class="fw-bold text-primary text-decoration-none">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

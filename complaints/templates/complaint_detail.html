@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ complaint.title|truncatechars:30 }}</li>
+        </ol>
+    </nav>
+
+    <div class="row gx-lg-5">
+        <div class="col-lg-7 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                {% if complaint.image %}
+                    <img src="{{ complaint.image.url }}" class="img-fluid w-100" alt="Complaint Image" style="max-height: 500px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center text-muted" style="height: 300px;">
+                        <div class="text-center">
+                            <i class="fa-solid fa-image fa-4x opacity-25 mb-2"></i>
+                            <p>No image provided</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 glass-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h2 class="h3 fw-bold mb-0">{{ complaint.title }}</h2>
+                        {% if complaint.status == 'Pending' %}
+                            <span class="badge bg-danger fs-6 rounded-pill"><i class="fa-solid fa-clock me-1"></i> Pending</span>
+                        {% elif complaint.status == 'In Progress' %}
+                            <span class="badge bg-warning text-dark fs-6 rounded-pill"><i class="fa-solid fa-spinner me-1"></i> In Progress</span>
+                        {% else %}
+                            <span class="badge bg-success fs-6 rounded-pill"><i class="fa-solid fa-check-circle me-1"></i> Resolved</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex align-items-center text-muted mb-4 small">
+                        <span class="me-3"><i class="fa-solid fa-user me-1"></i> {{ complaint.user.username }}</span>
+                        <span><i class="fa-regular fa-calendar me-1"></i> {{ complaint.created_at|date:"F d, Y h:i A" }}</span>
+                    </div>
+
+                    <h5 class="fw-bold mb-3">Location Details</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item px-0 bg-transparent">
+                            <i class="fa-solid fa-building text-primary w-20px text-center me-2"></i> 
+                            <strong>Municipality:</strong> {{ complaint.get_municipality_display }}
+                        </li>
+                        <li class="list-group-item px-0 bg-transparent border-bottom-0">
+                            <i class="fa-solid fa-location-dot text-primary w-20px text-center me-2"></i> 
+                            <strong>Ward/Area:</strong> {{ complaint.ward }}
+                        </li>
+                    </ul>
+
+                    <h5 class="fw-bold mb-3">Description</h5>
+                    <div class="bg-light p-3 rounded-3 text-secondary" style="white-space: pre-line;">
+                        {{ complaint.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
